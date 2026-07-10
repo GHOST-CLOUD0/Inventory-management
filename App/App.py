@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from App.data import inventory
-from App.External_API import fetch_products
+from App.External_API import fetch_products, search_products_by_name
 
 app = Flask(__name__)
 
@@ -48,7 +48,20 @@ def delete_item(item_id):
     inventory.remove(item)
     return "", 204
     
+@app.route("/products/search", methods=["GET"])
+def search_products():
+    product_name = request.args.get("q", "").strip()
 
+    if not product_name:
+        return jsonify({"error": "Search term is required"}), 400
+
+    products = search_products_by_name(product_name)
+
+    return jsonify({
+        "count": len(products),
+        "results": products
+    }), 200
+    
 @app.route('/inventory/import', methods=['POST'])
 def import_inventory_item():
     data = request.get_json()

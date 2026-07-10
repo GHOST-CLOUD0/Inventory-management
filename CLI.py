@@ -61,9 +61,60 @@ def delete_inventory():
         print(response.json())
     
 def search_openfoodfacts():
-    barcode = input("Enter barcode: ")
-    response =requests.get(f"{BASE_URL}/product/{barcode}")
-    print(response.json()) 
+    product_name = input("Enter a product name to search: ").strip()
+    if not product_name:
+        print("Product name is required")
+        return 
+    response = requests.get(f"{BASE_URL}/products/search",
+        params={"q": product_name})
+    if response.status_code != 200:
+        print(response.json())
+        return
+
+    results = response.json().get("results", [])
+
+    if not results:
+        print("No products found.")
+        return
+
+    print("\nSearch results:")
+    for index, product in enumerate(results, start=1):
+        print(
+            f"{index}. {product.get('product_name', 'Unknown')} "
+            f"- {product.get('brands', 'Unknown brand')} "
+            f"(barcode: {product['code']})"
+        )
+
+    choice = input("\nEnter a result number to add it, or 0 to cancel: ").strip()
+
+    try:
+        choice = int(choice)
+        if choice == 0:
+            print("Import cancelled.")
+            return
+
+        selected_product = results[choice - 1]
+    except (ValueError, IndexError):
+        print("Invalid selection.")
+        return
+
+    add_to_inventory = input(
+        f"Add '{selected_product['product_name']}' to inventory? (y/n): "
+    ).lower()
+
+    if add_to_inventory == "y":
+        response = requests.post(
+            f"{BASE_URL}/inventory/import",
+            json={"barcode": selected_product["code"]}
+        )
+
+        if response.status_code == 201:
+            print("Product added to inventory!")
+            print(response.json())
+        else:
+            print(response.json())
+    else:
+        print("Product was not added.")                            
     
 def import_products():
     barcode = input("Enter product barcode: ")
