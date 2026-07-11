@@ -1,10 +1,13 @@
 import requests
 
+HEADERS = {
+    "User-Agent": "InventoryManagement/1.0 (ghost@example.com)"
+}
 def fetch_products(barcode):
     url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
 
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url,headers=HEADERS, timeout=10)
         response.raise_for_status()
     except requests.exceptions.RequestException:
         return {}
@@ -28,7 +31,7 @@ def search_products_by_name(product_name):
     }
 
     try:
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params,headers=HEADERS, timeout=10)
         response.raise_for_status()
     except requests.exceptions.RequestException:
         return []
